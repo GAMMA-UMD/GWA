@@ -1,5 +1,5 @@
 # GWA
-Geometric-Wave Acoustic dataset
+We release the Geometric-Wave Acoustic (GWA) dataset described in [our paper](https://arxiv.org/abs/2204.01787).
 
 ## Download
 See [download](download/README.md) for more details.
