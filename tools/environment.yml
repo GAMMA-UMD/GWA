@@ -1,0 +1,40 @@
+name: gwa
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1
+  - _openmp_mutex=4.5
+  - ca-certificates=2021.10.8
+  - certifi=2021.10.8
+  - igl=2.2.1
+  - ld_impl_linux-64=2.35.1
+  - libblas=3.9.0
+  - libcblas=3.9.0
+  - libffi=3.3
+  - libgcc-ng=9.3.0
+  - libgfortran-ng=11.2.0
+  - libgfortran5=11.2.0
+  - libgomp=9.3.0
+  - liblapack=3.9.0
+  - libopenblas=0.3.17
+  - libstdcxx-ng=9.3.0
+  - ncurses=6.3
+  - numpy=1.20.3
+  - openssl=1.1.1o
+  - pip=21.2.4
+  - python=3.9.12
+  - python_abi=3.9
+  - readline=8.1.2
+  - scipy=1.5.3
+  - setuptools=61.2.0
+  - sqlite=3.38.3
+  - tk=8.6.11
+  - tzdata=2022a
+  - wheel=0.37.1
+  - xz=5.2.5
+  - zlib=1.2.12
+  - pip:
+    - networkx==2.8
+    - tqdm==4.64.0
+    - trimesh==3.12.0
