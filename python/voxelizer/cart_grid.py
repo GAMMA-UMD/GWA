@@ -48,8 +48,9 @@ class CartGrid():
         xyzmin = np.array([xv[0],yv[0],zv[0]])
         xyzmax = np.array([xv[-1],yv[-1],zv[-1]])
 
-        assert np.all(xyzmin==xyzmin0)
-        assert np.all(xyzmax>=xyzmax0)
+        tol = 1e-6  # tolerance for rounding
+        assert np.allclose(xyzmin, xyzmin0, atol=tol)
+        assert np.all(xyzmax>=xyzmax0-tol)
 
         self.print(f'{Nx=}, {Ny=}, {Nz=}, N_grid_pts={Nx*Ny*Nz:g}')
         if fcc:
