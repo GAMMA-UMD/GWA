@@ -16,3 +16,10 @@ The key differences of this version with the original one are
 3. We add a convex hull to each house because some houses are not water-tight. We believe this is optional and should have minimum effect on most simulations.
 
 If you need to generate visual data as well, please check out [3D-FRONT-TOOLBOX](https://github.com/3D-FRONT-FUTURE/3D-FRONT-ToolBox/tree/master/scripts) or [BlenderProc](https://github.com/DLR-RM/BlenderProc).
+
+## Sampling Source/Listener Locations
+The `sample_src_lis.py` script is used to sample a set of source and listener locations for a set of scenes. The `--obj_path` argument for this script can be the same as the `--save_path` of `json2obj.py`. Example usage:
+
+`python sample_src_lis.py --obj_path ./outputs --Ns 5 --spacing 1.0`
+
+The above command samples each scene at 1.0m spacing in all dimensions and randomly pick 5 locations among all sampled locations as source locations. The output of this script is a `sim_config.json` file under each folder. Which will be read by a simulator.
