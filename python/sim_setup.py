@@ -16,6 +16,7 @@ import numpy as np
 import json as json
 from pathlib import Path
 from numpy import array as npa
+import h5py
 from common.room_geo import RoomGeo
 from voxelizer.cart_grid import CartGrid
 from voxelizer.vox_grid import VoxGrid
@@ -53,6 +54,7 @@ def sim_setup(
                 Nprocs=None, #number of processes for multiprocessing, defaults to 80% of cores
                 compress=None, #GZIP compress for HDF5, 0 to 9 (fast to slow)
                 rot_az_el=[0.,0.], #to rotate the whole scene (including sources/receivers) -- to test robustness of scheme
+                lazy_flag=False, #to skip voxelization if vox_out.h5 already exists from previous runs
               ):
     assert Tc is not None
     assert rh is not None
@@ -92,6 +94,26 @@ def sim_setup(
     cart_grid.print_stats()
     cart_grid.save(save_folder)
 
+    data_path = Path(save_folder) / Path('vox_out.h5')
+    if lazy_flag and data_path.exists():
+        # skip re-running voxelization to save time
+        vox_scene = VoxScene(room_geo,cart_grid,None,data_folder=save_folder,fcc=fcc_flag)
+        vox_scene.print('read vox from a previous run')
+        h5f = h5py.File(data_path, 'r')
+        vox_scene.bn_ixyz = h5f['bn_ixyz'][...]
+        h5f.close()
+    else:
+        #set up the voxel grid (volume hierarchy for ray-triangle intersections)
+        vox_grid = VoxGrid(room_geo,cart_grid,data_folder=save_folder,Nvox_est=Nvox_est,Nh=Nh)
+        vox_grid.fill(Nprocs=Nprocs)
+        vox_grid.print_stats()
+
+        #'voxelize' the scene (calculate FDTD mesh adjacencies and identify/correct boundary surfaces)
+        vox_scene = VoxScene(room_geo,cart_grid,vox_grid,data_folder=save_folder,fcc=fcc_flag)
+        vox_scene.calc_adj(Nprocs=Nprocs)
+        vox_scene.check_adj_full()
+        vox_scene.save(save_folder,compress=compress)
+
     #set up source/receiver positions and input signals
     sim_comms = SimComms(save_folder=save_folder) #reads from cart_grid
     sim_comms.prepare_source_pts(Sxyz)
@@ -99,21 +121,10 @@ def sim_setup(
     sim_comms.prepare_source_signals(duration,sig_type=insig_type)
     if diff_source:
         sim_comms.diff_source()
-    sim_comms.save(compress=compress)
-
-    #set up the voxel grid (volume hierarchy for ray-triangle intersections)
-    vox_grid = VoxGrid(room_geo,cart_grid,Nvox_est=Nvox_est,Nh=Nh)
-    vox_grid.fill(Nprocs=Nprocs)
-    vox_grid.print_stats()
-
-    #'voxelize' the scene (calculate FDTD mesh adjacencies and identify/correct boundary surfaces)
-    vox_scene = VoxScene(room_geo,cart_grid,vox_grid,fcc=fcc_flag)
-    vox_scene.calc_adj(Nprocs=Nprocs)
-    vox_scene.check_adj_full()
-    vox_scene.save(save_folder,compress=compress)
 
     #check that source/receivers don't intersect with boundaries
     sim_comms.check_for_clashes(vox_scene.bn_ixyz)
+    sim_comms.save(compress=compress)
 
     #make copy for sorting/rotation for gpu 
     if save_folder_gpu is not None and Path(save_folder_gpu) != Path(save_folder):
