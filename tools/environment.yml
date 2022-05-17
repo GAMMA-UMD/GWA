@@ -5,16 +5,16 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
-  - ca-certificates=2021.10.8
+  - ca-certificates=2022.4.26
   - certifi=2021.10.8
   - igl=2.2.1
-  - ld_impl_linux-64=2.35.1
+  - ld_impl_linux-64=2.38
   - libblas=3.9.0
   - libcblas=3.9.0
   - libffi=3.3
   - libgcc-ng=9.3.0
-  - libgfortran-ng=11.2.0
-  - libgfortran5=11.2.0
+  - libgfortran-ng=9.3.0
+  - libgfortran5=9.3.0
   - libgomp=9.3.0
   - liblapack=3.9.0
   - libopenblas=0.3.17
@@ -35,6 +35,8 @@ dependencies:
   - xz=5.2.5
   - zlib=1.2.12
   - pip:
+    - cython==0.29.30
     - networkx==2.8
+    - python-fcl==0.6.1
     - tqdm==4.64.0
     - trimesh==3.12.0
