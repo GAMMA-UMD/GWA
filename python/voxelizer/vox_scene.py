@@ -58,13 +58,14 @@ from memory_profiler import profile as memory_profile
 
 F_EPS = np.finfo(np.float64).eps
 R_EPS = 1e-6 #relative eps (to grid spacing) for near hits
-DAT_FOLDER = 'mmap_dat' #change as needed
+
 
 class VoxScene:
-    def __init__(self,room_geo=None,cart_grid=None,vox_grid=None,fcc=False):
+    def __init__(self,room_geo=None,cart_grid=None,vox_grid=None,data_folder='/tmp',fcc=False):
         self.room_geo = room_geo
         self.vox_grid = vox_grid
         self.cart_grid = cart_grid
+        self.mmap_folder = Path(data_folder) / Path('mmap_dat')
         h = cart_grid.h #grid spacing
 
         self.NN = 6 #number of nearest neighbours
@@ -130,18 +131,18 @@ class VoxScene:
 
         NN = self.NN
 
+        clear_dat_folder(self.mmap_folder)
+
         #will need this much for check_adj (less needed for vox data)
         disk_space_needed = Nx*Ny*Nz*(1+self.fcc)
         self.print(f'{disk_space_needed/2**30=:.3f} GiB')
-        disk_space_available = psutil.disk_usage('.').free
+        disk_space_available = psutil.disk_usage(str(self.mmap_folder)).free
         self.print(f'{disk_space_available/2**30=:.3f} GiB')
         #proceed without asking unless more than 50% of free space
-        if disk_space_needed > 0.5*disk_space_available:
+        if disk_space_needed > 0.9*disk_space_available:
             self.print("WARNING: -- disk space usage high")
             if not yes_or_no('continue?'):
                 raise Exception('cancelled')
-
-        clear_dat_folder(DAT_FOLDER)
 
         #this is main function called by mp
         def process_voxel(idx,proc_idx):
@@ -272,7 +273,7 @@ class VoxScene:
             bn_ixyz_loc_vox = qq
 
             #store vox info on disk (variable size, can't use shared mem), no compression for speed
-            h5f_vox = h5py.File(Path(DAT_FOLDER) / Path(f'vox_data_{vox.idx}.h5'),'w')
+            h5f_vox = h5py.File(Path(self.mmap_folder) / Path(f'vox_data_{vox.idx}.h5'),'w')
             h5f_vox.create_dataset('adj_bn', data=adj_bn_vox)
             h5f_vox.create_dataset('tidx_bn', data=tidx_bn_vox)
             h5f_vox.create_dataset('ndist_bn', data=ndist_bn_vox)
@@ -346,7 +347,7 @@ class VoxScene:
                 continue
 
             #extract boundary points only
-            h5f_vox = h5py.File(Path(DAT_FOLDER) / Path(f'vox_data_{vox.idx}.h5'),'r')
+            h5f_vox = h5py.File(Path(self.mmap_folder) / Path(f'vox_data_{vox.idx}.h5'),'r')
             adj_bn_vox = h5f_vox['adj_bn'][...]
             tidx_bn_vox = h5f_vox['tidx_bn'][...]
             ndist_bn_vox = h5f_vox['ndist_bn'][...]
@@ -384,7 +385,7 @@ class VoxScene:
 
         self.print(self.timer.ftoc('merge'))
 
-        clear_dat_folder(DAT_FOLDER)
+        clear_dat_folder(self.mmap_folder)
 
         #surface area corrections (effective cell surface seen by walls)
         self.print('materials (+sides)...')
@@ -510,14 +511,14 @@ class VoxScene:
         #numba has no problem with memmap'd arrays
         if self.fcc:
             #FCC uses int16
-            adj_full = np.memmap(Path(DAT_FOLDER) / Path('adj_check.dat'), dtype='uint16', mode='w+', shape=(Nx,Ny,Nz))
+            adj_full = np.memmap(Path(self.mmap_folder) / Path('adj_check.dat'), dtype='uint16', mode='w+', shape=(Nx,Ny,Nz))
             self.print('filling full adj map (16-bit compressed)...')
             adj_full[:] = ~np.uint16(0)
             nb_fill_adj_fcc(bn_ixyz,adj_bn,adj_full)
             self.print('check...')
             nb_check_adj_full_fcc(adj_full,Nx,Ny,Nz)
         else:
-            adj_full = np.memmap(Path(DAT_FOLDER) / Path('adj_check.dat'), dtype='uint8', mode='w+', shape=(Nx,Ny,Nz))
+            adj_full = np.memmap(Path(self.mmap_folder) / Path('adj_check.dat'), dtype='uint8', mode='w+', shape=(Nx,Ny,Nz))
             self.print('filling full adj map (8-bit compressed)...')
             adj_full[:] = ~np.uint8(0)
             nb_fill_adj(bn_ixyz,adj_bn,adj_full)
@@ -525,7 +526,7 @@ class VoxScene:
             nb_check_adj_full(adj_full,Nx,Ny,Nz)
 
         del adj_full #release mmap
-        clear_dat_folder(DAT_FOLDER)
+        clear_dat_folder(self.mmap_folder)
         self.print(self.timer.ftoc('check_full'))
 
     def draw(self,backend='mayavi'):

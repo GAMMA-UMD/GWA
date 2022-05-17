@@ -41,7 +41,7 @@ class VoxBase:
 
 #base class for a voxel grid
 class VoxGridBase:
-    def __init__(self,room_geo):
+    def __init__(self,room_geo,data_folder):
         tris = room_geo.tris
         pts = room_geo.pts
         tris_pre = room_geo.tris_pre
@@ -61,6 +61,7 @@ class VoxGridBase:
         self.pts = pts
         self.Npts = Npts
         self.Ntris = Ntris
+        self.data_folder = data_folder
 
         self.voxels = []
         self.nonempty_idx = []
@@ -93,7 +94,7 @@ class VoxGridBase:
             self.nonempty_idx = [0]
         else:
             if Nprocs>1:
-                clear_dat_folder('mmap_dat')
+                clear_dat_folder(f'{self.data_folder}/mmap_dat')
 
             #create shared memory
             Ntris_vox_shm = shared_memory.SharedMemory(create=True,size=Nvox*np.dtype(np.int64).itemsize)
@@ -124,7 +125,7 @@ class VoxGridBase:
                     Ntris_vox[vox_idx] = len(tri_idxs_vox)
                     #if not empty, save vox data as file
                     if len(tri_idxs_vox)>0:
-                        np.array(tri_idxs_vox,dtype=np.int64).tofile(f'mmap_dat/vox_{vox_idx}.dat')
+                        np.array(tri_idxs_vox,dtype=np.int64).tofile(f'{self.data_folder}/mmap_dat/vox_{vox_idx}.dat')
                     pbar.update(1)
 
                 pbar.close()
@@ -171,13 +172,13 @@ class VoxGridBase:
                     vox = self.voxels[vox_idx]
                     if Ntris_vox[vox_idx]>0:
                         #now with one process read data from files
-                        vox.tri_idxs = np.fromfile(f'mmap_dat/vox_{vox_idx}.dat',dtype=np.int64)
+                        vox.tri_idxs = np.fromfile(f'{self.data_folder}/mmap_dat/vox_{vox_idx}.dat',dtype=np.int64)
                         vox.tris_pre = self.tris_pre[vox.tri_idxs]
                         vox.tris_mat = self.mats[vox.tri_idxs]
                         assert Ntris_vox[vox_idx] == len(vox.tri_idxs)
                         self.nonempty_idx.append(vox_idx)
 
-                clear_dat_folder('mmap_dat')
+                clear_dat_folder(f'{self.data_folder}/mmap_dat')
 
             self.print(self.timer.ftoc('voxgrid fill'))
 

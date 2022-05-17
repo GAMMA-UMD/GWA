@@ -41,12 +41,10 @@ class Voxel(VoxBase):
 #inherits draw_boxes() and and fill()
 class VoxGrid(VoxGridBase):
     #only for voxelizer, only uses cubic voxels for now
-    def __init__(self,room_geo,cart_grid,Nvox_est=None,Nh=None):
-        super().__init__(room_geo)
+    def __init__(self,room_geo,cart_grid,data_folder='/tmp',Nvox_est=None,Nh=None):
+        super().__init__(room_geo, data_folder)
 
         tris  = self.tris
-        pts   = self.pts
-        Npts  = self.Npts
         Ntris = self.Ntris
 
         h = cart_grid.h
@@ -56,8 +54,8 @@ class VoxGrid(VoxGridBase):
         Nxyz = cart_grid.Nxyz
         Nx,Ny,Nz = Nxyz
 
-        assert np.all(npa([xv[0],yv[0],zv[0]]) < np.amin(pts,axis=0))
-        assert np.all(npa([xv[Nx-1],yv[Ny-1],zv[Nz-1]]) > np.amax(pts,axis=0))
+        assert np.all(npa([xv[0],yv[0],zv[0]]) < room_geo.bmin)
+        assert np.all(npa([xv[Nx-1],yv[Ny-1],zv[Nz-1]]) > room_geo.bmax)
 
         #Nh*h is width of non-overlapping part of voxel (with 0.5 spacing around points)
         #Nh is also min number of points along one dim
