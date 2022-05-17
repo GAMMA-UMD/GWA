@@ -50,6 +50,7 @@ class SimComms:
 
         self.save_folder = save_folder
         self._diff = False
+        self.unstable_out_ids = []
 
     def print(self,fstring):
         print(f'--COMMS: {fstring}')
@@ -149,6 +150,7 @@ class SimComms:
         #out_alpha = self.out_alpha.flat[:]
         out_reorder = np.arange(out_ixyz.size) #no sorting here
         in_sigs = self.in_sigs
+        unstable_out_ids = self.unstable_out_ids
 
         if compress is not None:
             kw = {'compression': "gzip", 'compression_opts': compress}
@@ -164,6 +166,7 @@ class SimComms:
         h5f.create_dataset('Nr', data=np.int64(out_ixyz.size))
         h5f.create_dataset('Nt', data=np.int64(in_sigs.shape[-1]))
         h5f.create_dataset('diff', data=np.int8(self._diff))
+        h5f.create_dataset('unstable_out_ids', data=unstable_out_ids, **kw)
         h5f.close()
 
         #reattach updated values
@@ -244,7 +247,12 @@ class SimComms:
         _check_for_clashes(self.in_ixyz,bn_ixyz)
         self.print(timer.ftoc('check in_xyz'))
         timer.tic('check in_xyz')
-        self.print(f'boundary intersection check with out_ixyz..')
-        _check_for_clashes(self.out_ixyz,bn_ixyz)
+        try:
+            self.print(f'boundary intersection check with out_ixyz..')
+            _check_for_clashes(self.out_ixyz,bn_ixyz)
+        except AssertionError:
+            unstable_out_ids = np.unique(np.where(np.in1d(self.out_ixyz, bn_ixyz))[0] // self.in_alpha.size)
+            self.unstable_out_ids = unstable_out_ids
+            self.print(f'recorded unstable receiver IDs: {unstable_out_ids}')
         self.print(timer.ftoc('check in_xyz'))
 

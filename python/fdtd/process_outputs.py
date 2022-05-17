@@ -40,6 +40,7 @@ class ProcessOutputs:
         Nr = h5f['Nr'][()]
         Nt = h5f['Nt'][()]
         diff = h5f['diff'][()]
+        unstable_out_ids = h5f['unstable_out_ids'][...]
         h5f.close()
 
         #get some sim constants (floats) from sim_consts
@@ -75,6 +76,7 @@ class ProcessOutputs:
         self.diff = diff
         self.out_alpha = out_alpha
         self.data_dir = data_dir
+        self.unstable_out_ids = unstable_out_ids
 
         self.Tc = Tc
         self.rh = rh
@@ -281,10 +283,13 @@ class ProcessOutputs:
         n_fac = np.max(np.abs(r_out_f.flat[:])) 
         self.print(f'headroom = {-20*np.log10(n_fac):.1}dB')
         for i in range(r_out_f.shape[0]):
-            fname = Path(data_dir / Path(f'R{i+1:03d}_out_normalised.wav')) #normalised across receivers
+            if i in self.unstable_out_ids:
+                self.print(f'skip saving unstable receiver signal {i+1}_out.wav')
+                continue
+            fname = Path(data_dir / Path(f'R{i+1:04d}_out_normalised.wav')) #normalised across receivers
             wavwrite(fname,int(Fs_f),r_out_f[i]/n_fac) 
             if n_fac<1.0:
-                fname = Path(data_dir / Path(f'R{i+1:03d}_out_native.wav')) #not scaled, direct sound amplitude ~1/4πR
+                fname = Path(data_dir / Path(f'R{i+1:04d}_out_native.wav')) #not scaled, direct sound amplitude ~1/4πR
                 wavwrite(fname,int(Fs_f),r_out_f[i]) 
 
     #saw processed outputs in .h5 (with native scaling) 
