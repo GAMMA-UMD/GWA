@@ -15,10 +15,12 @@
 # Also prunes triangles, prints some stats (surface areas, volume), rotates scene, and draws
 #
 ##############################################################################
+import os.path
 
 import numpy as np
 import json as json
 from numpy import array as npa
+import trimesh
 from common.tris_precompute import tris_precompute
 from common.myfuncs import dotv,vecnorm
 from common.myfuncs import rotate_az_el_deg
@@ -73,8 +75,17 @@ class RoomGeo:
         #print(data)
 
         #attach
-        mats_dict = data['mats_hash']
-        mat_str = list(mats_dict.keys())
+        if 'mats_hash' in data:
+            mats_dict = data['mats_hash']
+            mat_str = list(mats_dict.keys())
+        elif 'obj_path' in data:
+            if os.path.isabs(data['obj_path']):
+                obj_path = data['obj_path']
+            else:
+                obj_path = os.path.join(os.path.dirname(json_filename), data['obj_path'])
+            waveobj = trimesh.load(obj_path, force='scene')
+            mats_dict = {key: {} for key in waveobj.geometry.keys()}
+            mat_str = list(mats_dict.keys())
 
         Nmat = len(mat_str) #not including unmarked
         mat_str.sort() #will process in alphabetical order
@@ -88,25 +99,41 @@ class RoomGeo:
 
         colors = []
         #convert to np arrays
-        for mat in mat_str:
-            mats_dict[mat]['pts'] = npa(mats_dict[mat]['pts'],dtype=np.float64) @ R #also rotate pts here
-            mats_dict[mat]['tris'] = npa(mats_dict[mat]['tris'],dtype=np.int64)
-            colors.append(mats_dict[mat]['color'])
+        if 'mats_hash' in data:
+            for mat in mat_str:
+                mats_dict[mat]['tris'] = npa(mats_dict[mat]['tris'],dtype=np.int64)
+                colors.append(mats_dict[mat]['color'])
+
+        elif 'obj_path' in data:
+            for mat in mat_str:
+                mats_dict[mat]['tris'] = npa(waveobj.geometry[mat].faces, dtype=np.int64)
+                mats_dict[mat]['pts'] = npa(waveobj.geometry[mat].vertices)
+                mats_dict[mat]['sides'] = [3] * len(mats_dict[mat]['tris']) # assumes double-sided
+                try:
+                    mats_dict[mat]['color'] = [a for a in waveobj.geometry[mat].visual.material.ambient[:3]]
+                except:
+                    mats_dict[mat]['color'] = [0, 0, 0]
+                colors.append(mats_dict[mat]['color'])
 
         #calculate bmin/bmax
         for mat in mat_str:
-            pts = mats_dict[mat]['pts']
-            tris = mats_dict[mat]['tris']
-            bmin = np.min(np.r_[pts,bmin[None,:]],axis=0)
-            bmax = np.max(np.r_[pts,bmax[None,:]],axis=0)
+            pts = npa(mats_dict[mat]['pts'])
+            bmin = np.min(np.r_[pts,bmin[None,:]], axis=0)
+            bmax = np.max(np.r_[pts,bmax[None,:]], axis=0)
 
         assert len(data['sources'])>0 #sources have to be defined in JSON
         assert len(data['receivers'])>0 #receivers have to be defined in JSON
         Sxyz = np.atleast_2d(npa([source['xyz'] for source in data['sources']],dtype=np.float64)) @ R
-        assert np.all((Sxyz>bmin) & (Sxyz<bmax))
+        if not np.all((Sxyz>bmin) & (Sxyz<bmax)):
+            bmax = np.max(np.r_[Sxyz+np.sqrt(self.area_eps),bmax[None,:]], axis=0)
+            bmin = np.min(np.r_[Sxyz-np.sqrt(self.area_eps),bmin[None,:]], axis=0)
+            self.print(f'[WARNING] Some source not in geometry bound, boundary automatically extended')
 
         Rxyz = np.atleast_2d(npa([receiver['xyz'] for receiver in data['receivers']],dtype=np.float64)) @ R
-        assert np.all((Rxyz>bmin) & (Rxyz<bmax))
+        if not np.all((Rxyz>bmin) & (Rxyz<bmax)):
+            bmax = np.max(np.r_[Rxyz+np.sqrt(self.area_eps),bmax[None,:]], axis=0)
+            bmin = np.min(np.r_[Rxyz-np.sqrt(self.area_eps),bmin[None,:]], axis=0)
+            self.print(f'[WARNING] Some receiver not in geometry bound, boundary automatically extended')
 
         self.mats_dict = mats_dict
         self.mat_str = mat_str
@@ -121,13 +148,18 @@ class RoomGeo:
         mats_dict = self.mats_dict
         mat_str = self.mat_str
         Nmat = self.Nmat
+        pts = self.pts
+        tris = self.tris
+
         #collapse tris and pts for easier computation
-        pts = np.concatenate([mats_dict[mat]['pts'] for mat in mat_str],axis=0)
+        if pts is None:
+            pts = np.concatenate([mats_dict[mat]['pts'] for mat in mat_str],axis=0)
 
         #need to offset pt indices when concatenating tris
-        tri_offsets = np.r_[0,np.cumsum([mats_dict[mat]['pts'].shape[0] for mat in mat_str])[:-1]]
-        assert tri_offsets.size == len(mat_str) #otherwise error, until PEP618 (Python 3.10)
-        tris = np.concatenate([mats_dict[mat]['tris']+toff for mat,toff in zip(mat_str,tri_offsets)],axis=0)
+        if tris is None:
+            tri_offsets = np.r_[0,np.cumsum([np.shape(mats_dict[mat]['pts'])[0] for mat in mat_str])[:-1]]
+            assert tri_offsets.size == len(mat_str) #otherwise error, until PEP618 (Python 3.10)
+            tris = np.concatenate([mats_dict[mat]['tris']+toff for mat,toff in zip(mat_str,tri_offsets)],axis=0)
 
         #can handle open scenes, but expects exported JSON to have at least four triangles
         assert tris.shape[0]>=4 #if this is a problem just insert tiny fake triangles into scene, or modify code
