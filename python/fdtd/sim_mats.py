@@ -19,6 +19,7 @@ from voxelizer.cart_grid import CartGrid
 from pathlib import Path
 from common.timerdict import TimerDict
 import h5py
+import random
 
 class SimMats: 
     def __init__(self,save_folder):
@@ -38,13 +39,16 @@ class SimMats:
         mat_list.sort()
         mat_list2 = list(mat_files_dict.keys())
         mat_list2.sort()
-        assert mat_list==mat_list2 #mat dict coming in has to match list from room_geo
 
         save_folder = self.save_folder
         read_folder = Path(read_folder)
         DEF_list = []
         for mat in mat_list:
-            h5f = h5py.File(Path(read_folder / Path(mat_files_dict[mat])),'r')
+            if mat in mat_list2:
+                h5f = h5py.File(Path(read_folder / Path(mat_files_dict[mat])),'r')
+            else:
+                # assign random material available
+                h5f = h5py.File(Path(read_folder / Path(random.choice(list(mat_files_dict.values())))),'r')
             DEF_list.append( h5f['DEF'][()] )
             h5f.close()
 
