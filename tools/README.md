@@ -23,3 +23,10 @@ The `sample_src_lis.py` script is used to sample a set of source and listener lo
 `python sample_src_lis.py --obj_path ./outputs --Ns 5 --spacing 1.0`
 
 The above command samples each scene at 1.0m spacing in all dimensions and randomly pick 5 locations among all sampled locations as source locations. The output of this script is a `sim_config.json` file under each folder. Which will be read by a simulator.
+
+## Creating and Assigning Acoustic Materials
+The `assign_mats.py` script operates in two stages. We first create material files that contain acoustic parameters from a [database](../files/acoustic_absorptions.json). Material fitting may be slow so we will only do it once and will skip it if material files already exist. Then these materials are assigned using a pre-trained sentence transformer model (please check the code). Example usage:
+
+`python assign_mats.py --obj_path ./outputs --mat_folder ../../pffdtd/data/materials/ --mat_json ../files/acoustic_absorptions.json`
+
+The above command will create materials in `.h5` format under path specified by `--mat_folder`, which is used by the wave acoustic simulator; whereas `house.mtl` files will be created under each scene folder found in `--obj_path` corresponding to the `house.obj` file, which is used by the geometric acoustic simulator. In addition, a `mat_files_dict.json` is also created in each scene folder to specify the name mapping between materials and its local file name.
