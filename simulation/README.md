@@ -1,5 +1,5 @@
 
-This directory contains codes that can be used for geometric and wave acoustic simulations. You may replace them with any other simulators of the same type as long as the same input is parsed correctly by both simulators, though energy calibration should be done for any new combinations.
+This directory contains codes that can be used for geometric and wave acoustic simulations. If any of these simulation fails, you should monitor the CPU and GPU memory usage to make sure the errors are not memory related. You may replace them with any other simulators of the same type as long as the same input is parsed correctly by both simulators, though energy calibration should be done for any new combinations.
 
 ## Data Folder
 Simulation codes in this repo work on individual folders that contain files defining a simulation setup. Please see our [example folder](example) that defines an exmpty box scene. The typical structure of a simulation folder looks like
