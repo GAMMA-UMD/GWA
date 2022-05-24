@@ -9,7 +9,7 @@ Simulation codes in this repo work on individual folders that contain files defi
     ├── [model-name].obj         # geometry definition of a scene
     ├── [model-name].mtl         # acoustic material parameters used by the geometric acoustic simulator
     ├── sim_config.json          # simulation configuration file that points to the model and defines source and receiver locations
-    ├── mat_files_dict.json      # mapping between acoustic material names and local database files used by the wave acoustic simulator
+    └── mat_files_dict.json      # mapping between acoustic material names and local database files used by the wave acoustic simulator
 ```
 
 ## Geometric Acoustic Simulation
