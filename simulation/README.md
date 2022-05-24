@@ -12,6 +12,10 @@ Simulation codes in this repo work on individual folders that contain files defi
     ├── mat_files_dict.json      # mapping between acoustic material names and local database files used by the wave acoustic simulator
 ```
 
+## Geometric Acoustic Simulation
+This part relies on the [pygsound](https://github.com/GAMMA-UMD/pygsound) software. You can simply run `python sim_gsound.py --input example` and get `.wav` outputs in `examples/geo`.
+
+
 ## Wave Acoustic Simulation
 This part relies on the [pffdtd](https://github.com/bsxfun/pffdtd) software. A forked and modified version is provided in this folder which has a few more features that are helpful for large scale simulations. 
 The simulation runs in two steps:
@@ -35,5 +39,4 @@ cd pffdtd/python
 python -m fdtd.process_outputs --data_dir=../../example/gpu --fcut_lowpass 1400 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --save_wav --air_abs_filter='stokes'
 ```
 
-## Geometric Acoustic Simulation
-This part relies on the [pygsound](https://github.com/GAMMA-UMD/pygsound) software. 
+
