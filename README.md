@@ -8,6 +8,7 @@ See [download](download/README.md) for more details.
 The pre-computed IRs are provided as is and mostly used by convolving them with dry sounds to create artificial reverberation. We will provide more details and codes in this repo (in May 2022) on how to run the data generation pipeline using general 3D datasets with proper material assignments. Codes are organized as follows:
 
 * [`tools`](tools): tools related to mesh processing
+* [`simulation`](simulation): simulation codes and example
 
 ## Citation
 If you use the our codes or data in your research, please cite our paper as
