@@ -14,7 +14,7 @@ The pre-computed IRs are provided as is and mostly used by convolving them with 
 If you use the our codes or data in your research, please cite our paper as
 ```
 @inproceedings{tang2022gwa,
-    title={GWA: A Large Geometric-Wave Acoustic Dataset for Audio Deep Learning},
+    title={GWA: A Large Geometric-Wave Acoustic Dataset for Audio Processing},
     author={Zhenyu Tang and Rohith Aralikatti and Anton Ratnarajah and and Dinesh Manocha},
     url = {https://doi.org/10.1145/3528233.3530731},
     booktitle = {Special Interest Group on Computer Graphics and Interactive Techniques Conference Proceedings (SIGGRAPH '22 Conference Proceedings)},
