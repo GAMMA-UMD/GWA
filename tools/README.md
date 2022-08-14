@@ -31,5 +31,8 @@ The `assign_mats.py` script operates in two stages. We first create material fil
 
 The above command will create materials in `.h5` format under path specified by `--mat_folder`, which is used by the wave acoustic simulator; whereas `house.mtl` files will be created under each scene folder found in `--obj_path` corresponding to the `house.obj` file, which is used by the geometric acoustic simulator. In addition, a `mat_files_dict.json` is also created in each scene folder to specify the name mapping between materials and its local file name.
 
+## Energy Calibration
+Ideally, you should follow the procedure in the paper [Spatial Room Impulse Responses with a Hybrid Modeling Method](https://www.aes.org/e-lib/browse.cfm?elib=15852) to calculate the calibration coefficients for both simulators. But if you have not changed any settings in this repo, you may reuse the coefficients provided in `../files/calibration_parameters.json`. You should simply multiply corresponding impulse responses with their coefficients (`ita_geo` for the geometric simulator and `ita_fdtd` for the wave simulator, `ita_ref` is an extra normalization coefficient and can be ignored) either after simulations or right before the hybrid combination step (read next). 
+
 ## Hybrid Combination of Impulse Responses
 The `combiner.py` file contains key functions for combining the results from the wave and the geometric simulators. The `hybrid_combine()` function takes the paths of two impulse responses saved in `.wav` format and the crossover frequency as inputs and return the combined hybrid impulse response. Prior to this step, you need to find the correspondence between your result paths for both simulators.
