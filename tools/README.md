@@ -30,3 +30,6 @@ The `assign_mats.py` script operates in two stages. We first create material fil
 `python assign_mats.py --obj_path ./outputs --mat_folder ../../pffdtd/data/materials/ --mat_json ../files/acoustic_absorptions.json`
 
 The above command will create materials in `.h5` format under path specified by `--mat_folder`, which is used by the wave acoustic simulator; whereas `house.mtl` files will be created under each scene folder found in `--obj_path` corresponding to the `house.obj` file, which is used by the geometric acoustic simulator. In addition, a `mat_files_dict.json` is also created in each scene folder to specify the name mapping between materials and its local file name.
+
+## Hybrid Combination of Impulse Responses
+The `combiner.py` file contains key functions for combining the results from the wave and the geometric simulators. The `hybrid_combine()` function takes the paths of two impulse responses saved in `.wav` format and the crossover frequency as inputs and return the combined hybrid impulse response. Prior to this step, you need to find the correspondence between your result paths for both simulators.
